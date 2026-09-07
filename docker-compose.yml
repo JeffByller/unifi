@@ -1,0 +1,136 @@
+services:
+
+  mongo:
+    image: mongo:7.0.37
+    container_name: mongo
+    restart: unless-stopped
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+
+    volumes:
+      - /opt/unifi/mongo:/data/db
+
+    networks:
+      - unifi-net
+
+    command:
+      - --wiredTigerCacheSizeGB
+      - "0.40"
+
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 640M
+
+    ulimits:
+      nofile:
+        soft: 64000
+        hard: 64000
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "-u",
+          "${MONGO_ROOT_USER}",
+          "-p",
+          "${MONGO_ROOT_PASSWORD}",
+          "--authenticationDatabase",
+          "admin",
+          "--eval",
+          "db.adminCommand('ping').ok"
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+  unifi:
+    image: lscr.io/linuxserver/unifi-network-application:10.0.162
+    container_name: unifi
+
+    restart: unless-stopped
+
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+    environment:
+      TZ: America/Recife
+      PUID: 1000
+      PGID: 1000
+
+      MONGO_HOST: mongo
+      MONGO_PORT: 27017
+
+      MONGO_DBNAME: unifi
+      MONGO_USER: ${MONGO_UNIFI_USER}
+      MONGO_PASS: ${MONGO_UNIFI_PASSWORD}
+
+      MEM_LIMIT: 1792
+      MEM_STARTUP: 768
+
+    ports:
+      # STUN
+      - "3478:3478/udp"
+
+      # Inform
+      - "8080:8080"
+
+      # Controller
+      - "8443:8443"
+
+      # Guest Portal
+      - "8843:8843"
+      - "8880:8880"
+
+      # Speed test
+      - "6789:6789"
+
+      # Syslog
+      - "5514:5514/udp"
+
+      # Discovery
+      - "10001:10001/udp"
+
+    volumes:
+      - /opt/unifi/data:/config
+
+    networks:
+      - unifi-net
+
+    security_opt:
+      - no-new-privileges:true
+
+    ulimits:
+      nofile:
+        soft: 64000
+        hard: 64000
+
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2048M
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+
+networks:
+  unifi-net:
+    driver: bridge

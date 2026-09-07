@@ -1,0 +1,12 @@
+# Ignorar bancos pesados de dados e arquivos de configuracao em runtime
+mongo/
+data/
+backup/
+logs/
+run/
+
+# Ignorar arquivos de ambiente com senhas reais
+.env
+
+# Temp
+.DS_Store
