@@ -17,13 +17,13 @@ services:
 
     command:
       - --wiredTigerCacheSizeGB
-      - "0.40"
+      - "0.25"
 
     deploy:
       resources:
         limits:
           cpus: '1.0'
-          memory: 640M
+          memory: 448M
 
     ulimits:
       nofile:
@@ -78,8 +78,8 @@ services:
       MONGO_USER: ${MONGO_UNIFI_USER}
       MONGO_PASS: ${MONGO_UNIFI_PASSWORD}
 
-      MEM_LIMIT: 1792
-      MEM_STARTUP: 768
+      MEM_LIMIT: 1024
+      MEM_STARTUP: 384
 
     ports:
       # STUN
@@ -122,7 +122,7 @@ services:
       resources:
         limits:
           cpus: '1.0'
-          memory: 2048M
+          memory: 1280M
 
     logging:
       driver: json-file
